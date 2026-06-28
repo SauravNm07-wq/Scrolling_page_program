@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nebula Voyage // Pure Parallax Experience</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Space+Grotesk:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- Design Token Variables --- */
+        :root {
+            --bg-deep: #05050d;
+            --neon-cyan: #00f3ff;
+            --neon-magenta: #ff0055;
+            --text-light: #ffffff;
+            --text-muted: #7e7e9a;
+            --font-display: 'Cinzel', serif;
+            --font-body: 'Space Grotesk', sans-serif;
+        }
+
+        /* --- Global Reset & Performance Overrides --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            background-color: var(--bg-deep);
+            color: var(--text-light);
+            font-family: var(--font-body);
+            overflow-x: hidden;
+            height: 100%;
+        }
+
+        /* --- Persistent HUD Interface Overlay --- */
+        .hud-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 100;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 2rem;
+            border: 1px solid rgba(0, 243, 255, 0.03);
+        }
+
+        .hud-header, .hud-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+            letter-spacing: 4px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .hud-header .logo {
+            font-family: var(--font-display);
+            font-weight: 700;
+            color: var(--text-light);
+            background: linear-gradient(to right, #fff, var(--neon-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* --- Scroll Progress Tracker --- */
+        .scroll-indicator-container {
+            width: 120px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+
+        .scroll-indicator-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 0%;
+            background: var(--neon-cyan);
+            box-shadow: 0 0 10px var(--neon-cyan);
+        }
+
+        /* --- Core Parallax Stage Layout --- */
+        .parallax-container {
+            position: relative;
+            width: 100%;
+            z-index: 5;
+        }
+
+        .parallax-section {
+            position: relative;
+            min-height: 120vh; /* Extra breathing space for floating transitions */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 10%;
+            overflow: hidden;
+        }
+
+        /* --- Background Floating Canvas Layers --- */
+        .parallax-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 140%; /* Over-extended height prevents layer breaking on swift scroll vectors */
+            will-change: transform;
+            pointer-events: none;
+        }
+
+        /* Section 1 Visual Assets */
+        #sec-1-bg {
+            background: radial-gradient(circle at 80% 20%, rgba(255, 0, 85, 0.15), transparent 40%),
+                        radial-gradient(circle at 20% 80%, rgba(0, 243, 255, 0.12), transparent 50%);
+        }
+
+        #sec-1-mid {
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 100 100"><circle cx="10" cy="20" r="0.4" fill="%23fff" opacity="0.6"/><circle cx="70" cy="60" r="0.6" fill="%2300f3ff" opacity="0.8"/><circle cx="45" cy="15" r="0.3" fill="%23fff" opacity="0.4"/><circle cx="85" cy="30" r="0.5" fill="%23ff0055" opacity="0.5"/></svg>');
+            background-size: 300px 300px;
+        }
+
+        #sec-1-orb {
+            position: absolute;
+            right: 15%;
+            top: 25%;
+            width: 350px;
+            height: 350px;
+            background: linear-gradient(135deg, var(--neon-magenta), transparent);
+            border-radius: 50%;
+            filter: blur(60px);
+            opacity: 0.4;
+        }
+
+        /* Section 2 Visual Assets */
+        #sec-2-bg {
+            background: radial-gradient(circle at 50% 50%, rgba(0, 243, 255, 0.08), transparent 60%);
+        }
+
+        #sec-2-mesh {
+            background-image: linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            background-position: center;
+            transform: perspective(500px) rotateX(60deg);
+            height: 100%;
+            top: -20%;
+        }
+
+        /* Section 3 Visual Assets */
+        #sec-3-bg {
+            background: radial-gradient(circle at 30% 40%, rgba(255, 0, 85, 0.12), transparent 50%);
+        }
+
+        /* --- Foreground Content Layout --- */
+        .content-box {
+            position: relative;
+            z-index: 10;
+            max-width: 800px;
+            will-change: transform, opacity;
+            text-align: center;
+        }
+
+        .content-box.left-align {
+            text-align: left;
+            margin-right: auto;
+            max-width: 600px;
+        }
+
+        .content-box h1 {
+            font-family: var(--font-display);
+            font-size: clamp(3rem, 7vw, 6.5rem);
+            line-height: 0.95;
+            letter-spacing: -2px;
+            margin-bottom: 2rem;
+            text-transform: uppercase;
+        }
+
+        .text-outline {
+            color: transparent;
+            -webkit-text-stroke: 1px rgba(255, 255, 255, 0.7);
+        }
+
+        .content-box p {
+            font-size: clamp(1.1rem, 2vw, 1.4rem);
+            color: var(--text-muted);
+            line-height: 1.6;
+            font-weight: 300;
+        }
+
+        /* --- Interactive UX Cards Grid (Section 2) --- */
+        .interactive-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin-top: 4rem;
+            width: 100%;
+        }
+
+        .parallax-card {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 3rem 2rem;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            transition: border-color 0.4s ease, background 0.4s ease;
+            cursor: pointer;
+        }
+
+        .parallax-card:hover {
+            border-color: var(--neon-cyan);
+            background: rgba(0, 243, 255, 0.02);
+        }
+
+        .parallax-card h3 {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            letter-spacing: 1px;
+        }
+
+        .parallax-card p {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+        }
+
+        /* --- Responsive Viewport Adjustments --- */
+        @media (max-width: 968px) {
+            .interactive-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+            .parallax-section {
+                padding: 0 5%;
+                min-height: 100vh;
+            }
+            #sec-1-orb {
+                width: 200px;
+                height: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="hud-overlay">
+        <header class="hud-header">
+            <div class="logo">Aether // v2.6</div>
+            <div>[ Environment Active ]</div>
+        </header>
+        <footer class="hud-footer">
+            <div>Coordinates Mapping System</div>
+            <div class="scroll-indicator-container">
+                <div class="scroll-indicator-bar" id="progressBar"></div>
+            </div>
+        </footer>
+    </div>
+
+    <div class="parallax-container">
+        
+        <section class="parallax-section" id="section-1">
+            <div class="parallax-layer" id="sec-1-bg" data-speed="0.1"></div>
+            <div class="parallax-layer" id="sec-1-mid" data-speed="0.35"></div>
+            <div class="parallax-layer" id="sec-1-orb" data-speed="0.6"></div>
+            
+            <div class="content-box structural-node" data-speed="-0.15">
+                <h1>Ethereal <br><span class="text-outline">Dimensions</span></h1>
+                <p>Scroll down to initialize dynamic depth translation loops. Experience hardware-accelerated spatial mechanics inside a single layout canvas layer.</p>
+            </div>
+        </section>
+
+        <section class="parallax-section" id="section-2">
+            <div class="parallax-layer" id="sec-2-bg" data-speed="0.15"></div>
+            <div class="parallax-layer" id="sec-2-mesh" data-speed="0.45"></div>
+            
+            <div class="content-box left-align structural-node" data-speed="-0.05" style="width: 100%; max-width: 1100px;">
+                <h2 style="font-family: var(--font-display); font-size: 2.5rem; text-transform: uppercase; margin-bottom: 1rem; color: var(--neon-cyan);">01 // Node Acceleration</h2>
+                <p style="max-width: 600px;">Background structures, grids, and bounding boxes displace at multi-tiered scalar rates to trick your visual cortex.</p>
+                
+                <div class="interactive-grid">
+                    <div class="parallax-card">
+                        <h3>Kinetic</h3>
+                        <p>Fluid variable transformations calculated dynamically on every execution loop.</p>
+                    </div>
+                    <div class="parallax-card">
+                        <h3>Depth</h3>
+                        <p>Decoupled multi-axis translation tracking creates artificial 3D spatial horizons.</p>
+                    </div>
+                    <div class="parallax-card">
+                        <h3>Optimal</h3>
+                        <p>Forced composition layer parsing guarantees clean 60fps presentation metrics.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="parallax-section" id="section-3">
+            <div class="parallax-layer" id="sec-3-bg" data-speed="0.2"></div>
+            
+            <div class="content-box structural-node" data-speed="-0.2">
+                <h1 class="text-outline">Horizon Reached</h1>
+                <p style="max-width: 550px; margin: 0 auto;">You have successfully traversed the structural parameters of the viewport pipeline framework. Scroll upward to invert the spatial matrices.</p>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            // Document Element Caches
+            const progressBar = document.getElementById("progressBar");
+            const parallaxLayers = document.querySelectorAll(".parallax-layer");
+            const structuralNodes = document.querySelectorAll(".structural-node");
+
+            // Kinetic Physics Variables
+            let targetScrollY = 0;
+            let currentScrollY = 0;
+            const lerpFactor = 0.08; // Defines global scroll weight/fluidity (Lower is smoother, higher is punchier)
+
+            // Capture native window scroll milestones
+            window.addEventListener("scroll", () => {
+                targetScrollY = window.scrollY;
+            }, { passive: true });
+
+            // Core Frame Animation Iteration Routine Loop (Runs at maximum monitor Hz rate)
+            function executionParallaxEngineLoop() {
+                // Apply Linear Interpolation (Lerp) to smooth out raw scroll steps
+                currentScrollY += (targetScrollY - currentScrollY) * lerpFactor;
+
+                // 1. Calculate and update global progress indicator metrics
+                const totalScrollableHeight = document.documentElement.scrollHeight - window.innerHeight;
+                if (totalScrollableHeight > 0) {
+                    const scrollPercentage = (currentScrollY / totalScrollableHeight) * 100;
+                    progressBar.style.width = `${scrollPercentage}%`;
+                }
+
+                // 2. Compute background environmental layout translation layers
+                parallaxLayers.forEach(layer => {
+                    const movementSpeed = parseFloat(layer.getAttribute("data-speed")) || 0;
+                    const calculatedYTranslation = currentScrollY * movementSpeed;
+                    
+                    // Hardware-accelerated translate3d avoids layout re-flows entirely
+                    layer.style.transform = `translate3d(0, ${calculatedYTranslation}px, 0)`;
+                });
+
+                // 3. Compute foreground typography / element layout nodes transitions
+                structuralNodes.forEach(node => {
+                    const translationFactor = parseFloat(node.getAttribute("data-speed")) || 0;
+                    const calculatedNodeYTranslation = currentScrollY * translationFactor;
+                    
+                    // Simultaneously interpolate opacity as the element drifts across view dimensions
+                    const parentSection = node.closest('.parallax-section');
+                    const sectionTopOffset = parentSection.offsetTop;
+                    const relativeDistance = currentScrollY - sectionTopOffset;
+                    
+                    let adaptiveOpacity = 1 - Math.abs(relativeDistance / window.innerHeight);
+                    adaptiveOpacity = Math.max(0, Math.min(1, adaptiveOpacity)); // Clamp between 0 and 1
+
+                    node.style.transform = `translate3d(0, ${calculatedNodeYTranslation}px, 0)`;
+                    node.style.opacity = adaptiveOpacity;
+                });
+
+                // Request next frame execution loop continuously
+                requestAnimationFrame(executionParallaxEngineLoop);
+            }
+
+            // Fire up engine tracking pipelines
+            requestAnimationFrame(executionParallaxEngineLoop);
+
+            // Handle clean asset scaling transformations on viewport modifications
+            window.addEventListener("resize", () => {
+                targetScrollY = window.scrollY;
+            });
+        });
+    </script>
+</body>
+</html>
