@@ -3,38 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nebula Voyage // Pure Parallax Experience</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Space+Grotesk:wght@300;400;600&display=swap" rel="stylesheet">
-    
+    <title>OBSIDIAN // The Cinematic Scroll Odyssey</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@800;900&family=Plus+Jakarta+Sans:wght@300;400;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
     <style>
-        /* --- Design Token Variables --- */
         :root {
-            --bg-deep: #05050d;
-            --neon-cyan: #00f3ff;
-            --neon-magenta: #ff0055;
-            --text-light: #ffffff;
-            --text-muted: #7e7e9a;
-            --font-display: 'Cinzel', serif;
-            --font-body: 'Space Grotesk', sans-serif;
+            --bg-canvas: #05060b;
+            --accent-primary: #50e3c2;
+            --accent-secondary: #7b2cff;
+            --text-main: #ffffff;
+            --text-muted: #525565;
+            --font-display: 'Cabinet Grotesk', sans-serif;
+            --font-body: 'Plus Jakarta Sans', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --scroll-progress: 0%;
         }
 
-        /* --- Global Reset & Performance Overrides --- */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            user-select: none;
+            -webkit-font-smoothing: antialiased;
         }
 
         body, html {
-            background-color: var(--bg-deep);
-            color: var(--text-light);
+            background-color: var(--bg-canvas);
+            color: var(--text-main);
             font-family: var(--font-body);
             overflow-x: hidden;
-            height: 100%;
+            width: 100%;
         }
 
-        /* --- Persistent HUD Interface Overlay --- */
-        .hud-overlay {
+        /* Fixed Global Canvas & Viewports */
+        .ambient-engine {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+            pointer-events: none;
+            background: 
+                radial-gradient(circle at calc(10% + (var(--scroll-progress) * 0.3)) calc(15% + (var(--scroll-progress) * 0.1)), rgba(123, 44, 255, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at calc(90% - (var(--scroll-progress) * 0.2)) calc(80% - (var(--scroll-progress) * 0.2)), rgba(80, 227, 194, 0.1) 0%, transparent 50%);
+        }
+
+        .ambient-engine::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: linear-gradient(rgba(255, 255, 255, 0.005) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(255, 255, 255, 0.005) 1px, transparent 1px);
+            background-size: 80px 80px;
+            background-position: center;
+            mask-image: radial-gradient(circle at 50% 50%, black 40%, transparent 80%);
+            -webkit-mask-image: radial-gradient(circle at 50% 50%, black 40%, transparent 80%);
+            opacity: 0.4;
+        }
+
+        .cinema-hud {
             position: fixed;
             top: 0;
             left: 0;
@@ -42,340 +69,885 @@
             height: 100vh;
             z-index: 100;
             pointer-events: none;
+            padding: 2.5rem;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            padding: 2rem;
-            border: 1px solid rgba(0, 243, 255, 0.03);
+            transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        .hud-header, .hud-footer {
+        .hud-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            font-family: var(--font-mono);
             font-size: 0.75rem;
-            letter-spacing: 4px;
+            letter-spacing: 2px;
             color: var(--text-muted);
             text-transform: uppercase;
         }
 
-        .hud-header .logo {
+        .brand-logo {
             font-family: var(--font-display);
-            font-weight: 700;
-            color: var(--text-light);
-            background: linear-gradient(to right, #fff, var(--neon-cyan));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            font-weight: 900;
+            font-size: 1.25rem;
+            color: var(--text-main);
+            letter-spacing: -1px;
         }
 
-        /* --- Scroll Progress Tracker --- */
-        .scroll-indicator-container {
-            width: 120px;
-            height: 2px;
-            background: rgba(255, 255, 255, 0.1);
-            position: relative;
+        .telemetry-counter {
+            color: var(--accent-primary);
+            font-weight: 600;
         }
 
-        .scroll-indicator-bar {
-            position: absolute;
-            top: 0;
-            left: 0;
-            height: 100%;
-            width: 0%;
-            background: var(--neon-cyan);
-            box-shadow: 0 0 10px var(--neon-cyan);
-        }
-
-        /* --- Core Parallax Stage Layout --- */
-        .parallax-container {
+        /* Scroll Frame Elements */
+        .scroll-stage {
             position: relative;
             width: 100%;
-            z-index: 5;
+            z-index: 2;
         }
 
-        .parallax-section {
+        .scroll-gate {
             position: relative;
-            min-height: 120vh; /* Extra breathing space for floating transitions */
+            width: 100%;
+            min-height: 150vh;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 0 10%;
             overflow: hidden;
+            transform-style: preserve-3d;
+            perspective: 1000px;
         }
 
-        /* --- Background Floating Canvas Layers --- */
-        .parallax-layer {
+        /* Layer Abstractions */
+        .spatial-layer {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 140%; /* Over-extended height prevents layer breaking on swift scroll vectors */
-            will-change: transform;
+            will-change: transform, opacity;
             pointer-events: none;
         }
 
-        /* Section 1 Visual Assets */
-        #sec-1-bg {
-            background: radial-gradient(circle at 80% 20%, rgba(255, 0, 85, 0.15), transparent 40%),
-                        radial-gradient(circle at 20% 80%, rgba(0, 243, 255, 0.12), transparent 50%);
+        .monolith-text {
+            font-family: var(--font-display);
+            font-size: clamp(8rem, 22vw, 24rem);
+            font-weight: 900;
+            line-height: 0.8;
+            letter-spacing: -0.05em;
+            color: transparent;
+            -webkit-text-stroke: 1px rgba(255, 255, 255, 0.03);
+            white-space: nowrap;
+            z-index: 2;
         }
 
-        #sec-1-mid {
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 100 100"><circle cx="10" cy="20" r="0.4" fill="%23fff" opacity="0.6"/><circle cx="70" cy="60" r="0.6" fill="%2300f3ff" opacity="0.8"/><circle cx="45" cy="15" r="0.3" fill="%23fff" opacity="0.4"/><circle cx="85" cy="30" r="0.5" fill="%23ff0055" opacity="0.5"/></svg>');
-            background-size: 300px 300px;
+        .geo-shard {
+            width: 80px;
+            height: 80px;
+            border: 1px solid rgba(80, 227, 194, 0.2);
+            transform: rotate(45deg);
+            background: linear-gradient(135deg, rgba(255,255,255,0.01), transparent);
+            z-index: 4;
         }
 
-        #sec-1-orb {
-            position: absolute;
-            right: 15%;
-            top: 25%;
-            width: 350px;
-            height: 350px;
-            background: linear-gradient(135deg, var(--neon-magenta), transparent);
-            border-radius: 50%;
-            filter: blur(60px);
-            opacity: 0.4;
+        .geo-shard.purple {
+            border-color: rgba(123, 44, 255, 0.2);
+            width: 140px;
+            height: 140px;
         }
 
-        /* Section 2 Visual Assets */
-        #sec-2-bg {
-            background: radial-gradient(circle at 50% 50%, rgba(0, 243, 255, 0.08), transparent 60%);
-        }
-
-        #sec-2-mesh {
-            background-image: linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
-                              linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
-            background-size: 50px 50px;
-            background-position: center;
-            transform: perspective(500px) rotateX(60deg);
-            height: 100%;
-            top: -20%;
-        }
-
-        /* Section 3 Visual Assets */
-        #sec-3-bg {
-            background: radial-gradient(circle at 30% 40%, rgba(255, 0, 85, 0.12), transparent 50%);
-        }
-
-        /* --- Foreground Content Layout --- */
-        .content-box {
+        .theater-block {
             position: relative;
             z-index: 10;
             max-width: 800px;
-            will-change: transform, opacity;
             text-align: center;
+            will-change: transform, opacity, filter;
         }
 
-        .content-box.left-align {
+        .theater-block.left {
             text-align: left;
             margin-right: auto;
-            max-width: 600px;
+            max-width: 700px;
         }
 
-        .content-box h1 {
+        .theater-block h2 {
             font-family: var(--font-display);
-            font-size: clamp(3rem, 7vw, 6.5rem);
+            font-size: clamp(3.5rem, 7vw, 6.5rem);
+            font-weight: 900;
             line-height: 0.95;
-            letter-spacing: -2px;
-            margin-bottom: 2rem;
+            letter-spacing: -0.04em;
             text-transform: uppercase;
+            margin-bottom: 2rem;
         }
 
-        .text-outline {
-            color: transparent;
-            -webkit-text-stroke: 1px rgba(255, 255, 255, 0.7);
+        .gradient-clip {
+            background: linear-gradient(135deg, #ffffff 30%, var(--accent-primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        .content-box p {
-            font-size: clamp(1.1rem, 2vw, 1.4rem);
-            color: var(--text-muted);
+        .theater-block p {
+            font-size: clamp(1.1rem, 1.8vw, 1.4rem);
             line-height: 1.6;
+            color: #afb2c5;
             font-weight: 300;
         }
 
-        /* --- Interactive UX Cards Grid (Section 2) --- */
-        .interactive-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 2rem;
-            margin-top: 4rem;
+        .reveal-viewport {
+            position: relative;
             width: 100%;
-        }
-
-        .parallax-card {
-            background: rgba(255, 255, 255, 0.01);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            padding: 3rem 2rem;
+            height: 380px;
+            margin-top: 3rem;
+            overflow: hidden;
             border-radius: 8px;
-            backdrop-filter: blur(10px);
-            transition: border-color 0.4s ease, background 0.4s ease;
-            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.01);
         }
 
-        .parallax-card:hover {
-            border-color: var(--neon-cyan);
-            background: rgba(0, 243, 255, 0.02);
+        .reveal-curtain {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(45deg, var(--accent-secondary), #0e071a);
+            clip-path: polygon(0 0, var(--reveal-delta, 0%) 0, var(--reveal-delta, 0%) 100%, 0 100%);
+            display: flex;
+            align-items: center;
+            padding: 4rem;
+            will-change: clip-path;
         }
 
-        .parallax-card h3 {
+        .reveal-curtain h3 {
             font-family: var(--font-display);
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-            letter-spacing: 1px;
+            font-size: 3rem;
+            color: var(--accent-primary);
         }
 
-        .parallax-card p {
-            font-size: 0.95rem;
-            color: var(--text-muted);
+        /* --- EXTENDED SECTIONS PARALLAX FRAMEWORK --- */
+
+        /* Section 4: Galaxy Vector System */
+        .galaxy-canvas {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            pointer-events: none;
         }
 
-        /* --- Responsive Viewport Adjustments --- */
-        @media (max-width: 968px) {
-            .interactive-grid {
-                grid-template-columns: 1fr;
-                gap: 1.5rem;
-            }
-            .parallax-section {
-                padding: 0 5%;
-                min-height: 100vh;
-            }
-            #sec-1-orb {
-                width: 200px;
-                height: 200px;
-            }
+        /* Section 5: Glassmorphism Arrays */
+        .glass-cluster {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 5;
+        }
+
+        .glass-card {
+            position: absolute;
+            width: clamp(250px, 25vw, 380px);
+            height: clamp(320px, 35vh, 480px);
+            background: rgba(255, 255, 255, 0.01);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 2.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+            transform-style: preserve-3d;
+            will-change: transform, opacity;
+        }
+
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 16px;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent, rgba(80,227,194,0.2));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        .glass-card h4 {
+            font-family: var(--font-display);
+            font-size: 1.75rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+        }
+
+        /* Section 6: Typography Matrix */
+        .typo-playground {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            pointer-events: none;
+            z-index: 2;
+            text-transform: uppercase;
+            font-family: var(--font-display);
+            font-weight: 900;
+            line-height: 0.75;
+        }
+
+        .typo-row {
+            font-size: clamp(6rem, 18vw, 18rem);
+            white-space: nowrap;
+            color: transparent;
+            -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.02);
+            will-change: transform;
+        }
+
+        .typo-row.solid {
+            color: rgba(255, 255, 255, 0.015);
+            -webkit-text-stroke: none;
+        }
+
+        /* Section 7: Tunnel Engine Layout */
+        .tunnel-container {
+            position: absolute;
+            inset: 0;
+            perspective: 600px;
+            z-index: 1;
+        }
+
+        .tunnel-grid {
+            position: absolute;
+            width: 200vw;
+            height: 200vh;
+            top: -50%;
+            left: -50%;
+            background-image: 
+                linear-gradient(rgba(80, 227, 194, 0.04) 2px, transparent 2px),
+                linear-gradient(90deg, rgba(80, 227, 194, 0.04) 2px, transparent 2px);
+            background-size: 100px 100px;
+            transform: rotateX(85deg) translate3d(0, 0, 0);
+            will-change: transform;
+        }
+
+        .tunnel-grid.ceil {
+            transform: rotateX(-85deg) translate3d(0, 0, 0);
+            top: -50%;
+            background-image: 
+                linear-gradient(rgba(123, 44, 255, 0.04) 2px, transparent 2px),
+                linear-gradient(90deg, rgba(123, 44, 255, 0.04) 2px, transparent 2px);
+        }
+
+        /* Section 8: Geometry Morphing Vectors */
+        .geometry-stage {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+        }
+
+        .morph-shape {
+            position: absolute;
+            border: 1px dashed rgba(255, 255, 255, 0.15);
+            will-change: transform, opacity, border-radius;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .morph-shape::after {
+            content: '';
+            width: 30%;
+            height: 30%;
+            border: 1px solid var(--accent-primary);
+            transform: rotate(45deg);
+        }
+
+        /* Section 9: Controlled Timeline Platform */
+        .timeline-track {
+            position: relative;
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6rem;
+            z-index: 10;
+        }
+
+        .timeline-node {
+            position: relative;
+            display: flex;
+            gap: 3rem;
+            align-items: flex-start;
+            opacity: 0.15;
+            transform: translate3d(0, 50px, 0);
+            will-change: transform, opacity, filter;
+            filter: blur(4px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .timeline-node.active {
+            opacity: 1;
+            transform: translate3d(0, 0, 0);
+            filter: blur(0px);
+        }
+
+        .node-metric {
+            font-family: var(--font-mono);
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: var(--accent-primary);
+            text-shadow: 0 0 20px rgba(80, 227, 194, 0.4);
+        }
+
+        .node-body h4 {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Section 10: Liquid Gradient Canvas Element */
+        .liquid-container {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            filter: blur(40px) contrast(120%);
+            opacity: 0.4;
+            will-change: transform;
+        }
+
+        .liquid-blob {
+            position: absolute;
+            width: 50vw;
+            height: 50vw;
+            border-radius: 50%;
+            background: mix(var(--accent-primary), var(--accent-secondary));
+            will-change: transform;
+        }
+
+        /* Section 11: 3D Reveal Gallery */
+        .gallery-matrix {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+        }
+
+        .gallery-item {
+            position: absolute;
+            width: clamp(280px, 22vw, 420px);
+            height: clamp(380px, 32vh, 560px);
+            background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01));
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            will-change: transform, opacity, clip-path;
+            box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+        }
+
+        .gallery-svg-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #0d0f19;
+        }
+
+        /* Section 12: Absolute Epilogue End Site */
+        .epilogue-sphere {
+            position: absolute;
+            width: 180px;
+            height: 180px;
+            background: radial-gradient(circle at 35% 35%, #ffffff 0%, var(--accent-primary) 40%, transparent 75%);
+            border-radius: 50%;
+            z-index: 5;
+            box-shadow: 0 0 100px rgba(80, 227, 194, 0.6);
+            will-change: transform, opacity, filter;
+        }
+
+        .story-epilogue-text {
+            font-family: var(--font-display);
+            font-size: clamp(2rem, 5vw, 4.5rem);
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: -1px;
+            opacity: 0;
+            will-change: transform, opacity, filter;
+            text-align: center;
+            z-index: 10;
+        }
+
+        @media (max-width: 768px) {
+            .cinema-hud { padding: 1.5rem; }
+            .scroll-gate { padding: 0 6%; min-height: 110vh; }
+            .glass-card { width: 280px; height: 360px; }
+            .timeline-node { flex-direction: column; gap: 0.5rem; }
         }
     </style>
 </head>
 <body>
 
-    <div class="hud-overlay">
-        <header class="hud-header">
-            <div class="logo">Aether // v2.6</div>
-            <div>[ Environment Active ]</div>
+    <div class="ambient-engine" id="ambientEngine"></div>
+
+    <div class="cinema-hud" id="hudFrame">
+        <header class="hud-row">
+            <div class="brand-logo">OBSIDIAN //</div>
+            <div id="hudSectionLabel">ZONE // 01</div>
         </header>
-        <footer class="hud-footer">
-            <div>Coordinates Mapping System</div>
-            <div class="scroll-indicator-container">
-                <div class="scroll-indicator-bar" id="progressBar"></div>
-            </div>
+        <footer class="hud-row">
+            <div>DATA STREAM SYSTEM</div>
+            <div>ODYSSEY PROGRESS: <span class="telemetry-counter" id="progressVal">00.0%</span></div>
         </footer>
     </div>
 
-    <div class="parallax-container">
+    <div class="scroll-stage" id="stage">
         
-        <section class="parallax-section" id="section-1">
-            <div class="parallax-layer" id="sec-1-bg" data-speed="0.1"></div>
-            <div class="parallax-layer" id="sec-1-mid" data-speed="0.35"></div>
-            <div class="parallax-layer" id="sec-1-orb" data-speed="0.6"></div>
-            
-            <div class="content-box structural-node" data-speed="-0.15">
-                <h1>Ethereal <br><span class="text-outline">Dimensions</span></h1>
-                <p>Scroll down to initialize dynamic depth translation loops. Experience hardware-accelerated spatial mechanics inside a single layout canvas layer.</p>
+        <section class="scroll-gate" id="gate-1" data-zone="ZONE // 01">
+            <div class="spatial-layer monolith-text" data-depth="0.12" style="top: 25%; left: -5%;">KINETIC</div>
+            <div class="spatial-layer geo-shard" data-depth="0.6" style="top: 20%; right: 15%;"></div>
+            <div class="theater-block" data-depth="-0.15">
+                <h2>The Art of <br><span class="gradient-clip">Spatial Motion</span></h2>
+                <p>An elite parallax landscape engineered to bypass flat vertical shifting. Experience calculated physical acceleration built onto the browser viewport core.</p>
             </div>
         </section>
 
-        <section class="parallax-section" id="section-2">
-            <div class="parallax-layer" id="sec-2-bg" data-speed="0.15"></div>
-            <div class="parallax-layer" id="sec-2-mesh" data-speed="0.45"></div>
-            
-            <div class="content-box left-align structural-node" data-speed="-0.05" style="width: 100%; max-width: 1100px;">
-                <h2 style="font-family: var(--font-display); font-size: 2.5rem; text-transform: uppercase; margin-bottom: 1rem; color: var(--neon-cyan);">01 // Node Acceleration</h2>
-                <p style="max-width: 600px;">Background structures, grids, and bounding boxes displace at multi-tiered scalar rates to trick your visual cortex.</p>
-                
-                <div class="interactive-grid">
-                    <div class="parallax-card">
-                        <h3>Kinetic</h3>
-                        <p>Fluid variable transformations calculated dynamically on every execution loop.</p>
+        <section class="scroll-gate" id="gate-2" data-zone="ZONE // 02">
+            <div class="spatial-layer monolith-text" data-depth="0.2" style="top: 35%; right: -8%; -webkit-text-stroke: 1px rgba(123, 44, 255, 0.05);">MATRIX</div>
+            <div class="spatial-layer geo-shard purple" data-depth="0.45" style="bottom: 12%; left: 8%;"></div>
+            <div class="theater-block left" data-depth="-0.08" style="width: 100%;">
+                <h2>01 // Dynamic <br>Curtain Masking</h2>
+                <p>As you pass through this tracking node vector, a localized layout geometric clip-path mutation compiles automatically based on absolute proximity boundaries.</p>
+                <div class="reveal-viewport">
+                    <div style="padding: 4rem; display: flex; align-items: center; height: 100%;">
+                        <h3 style="font-family: var(--font-display); font-size: 2.5rem; color: var(--text-muted);">System Sleeping State...</h3>
                     </div>
-                    <div class="parallax-card">
-                        <h3>Depth</h3>
-                        <p>Decoupled multi-axis translation tracking creates artificial 3D spatial horizons.</p>
-                    </div>
-                    <div class="parallax-card">
-                        <h3>Optimal</h3>
-                        <p>Forced composition layer parsing guarantees clean 60fps presentation metrics.</p>
+                    <div class="reveal-curtain" id="revealCurtain">
+                        <h3>System Initialized // Active</h3>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section class="parallax-section" id="section-3">
-            <div class="parallax-layer" id="sec-3-bg" data-speed="0.2"></div>
-            
-            <div class="content-box structural-node" data-speed="-0.2">
-                <h1 class="text-outline">Horizon Reached</h1>
-                <p style="max-width: 550px; margin: 0 auto;">You have successfully traversed the structural parameters of the viewport pipeline framework. Scroll upward to invert the spatial matrices.</p>
+        <section class="scroll-gate" id="gate-3" data-zone="ZONE // 03">
+            <div class="spatial-layer monolith-text" data-depth="0.3" style="top: 15%; left: 10%;">HORIZON</div>
+            <div class="theater-block" data-depth="-0.2">
+                <h2>System Canvas <br><span class="gradient-clip">Absolute</span></h2>
+                <p style="max-width: 600px; margin: 0 auto;">You have completed the structural depth sequence traversal. Prepare to break standard grid configurations. The universe is decompressing.</p>
             </div>
+        </section>
+
+        <section class="scroll-gate" id="gate-4" data-zone="GALAXY // 04">
+            <canvas class="galaxy-canvas" id="galaxyCanvas"></canvas>
+            <div class="theater-block" data-depth="-0.1" style="z-index: 10;">
+                <h2 style="font-size: clamp(4rem, 9vw, 8rem); letter-spacing: -2px;">ENTER THE VOID</h2>
+                <p style="color: var(--accent-primary); font-family: var(--font-mono); font-size: 0.95rem; letter-spacing: 3px;">INITIALIZING QUANTUM GRAVITY TRANSITION</p>
+            </div>
+        </section>
+
+        <section class="scroll-gate" id="gate-5" data-zone="GEOMETRIC // 05">
+            <div class="glass-cluster" id="glassCluster">
+                <div class="glass-card" style="left: 12%; top: 15%;" data-card-speed="0.2">
+                    <h4>01 // KINETIC</h4>
+                    <p>Weightless glass modules tracking deep space inertia rules independently.</p>
+                </div>
+                <div class="glass-card" style="right: 15%; top: 25%;" data-card-speed="-0.15">
+                    <h4>02 // REFRACT</h4>
+                    <p>Dynamic backdrop blur algorithms parsing multi-layered rendering matrices.</p>
+                </div>
+                <div class="glass-card" style="left: 38%; bottom: 10%;" data-card-speed="0.3">
+                    <h4>03 // DEPTH</h4>
+                    <p>Overlapping layout profiles generating organic visual perspective lines.</p>
+                </div>
+            </div>
+            <div class="theater-block" data-depth="-0.3" style="margin-top: -35vh; pointer-events:none;">
+                <h2>Suspended Glass Elements</h2>
+            </div>
+        </section>
+
+        <section class="scroll-gate" id="gate-6" data-zone="TYPO // 06">
+            <div class="typo-playground" id="typoPlayground">
+                <div class="typo-row" data-scroll-mx="-1.5">DEPTH // DEPTH // DEPTH</div>
+                <div class="typo-row solid" data-scroll-mx="2">MOTION // PARALLAX // PERSPECTIVE</div>
+                <div class="typo-row" data-scroll-mx="-0.8">OBSIDIAN // SCROLL // ENGINE</div>
+                <div class="typo-row" data-scroll-mx="1.2">LAYER MATRIX // LAYER MATRIX</div>
+            </div>
+            <div class="theater-block" data-depth="-0.05">
+                <p style="text-transform: uppercase; font-family: var(--font-mono); letter-spacing: 4px;">Typography Matrix Horizon</p>
+            </div>
+        </section>
+
+        <section class="scroll-gate" id="gate-7" data-zone="TUNNEL // 07">
+            <div class="tunnel-container">
+                <div class="tunnel-grid" id="tunnelFloor"></div>
+                <div class="tunnel-grid ceil" id="tunnelCeil"></div>
+            </div>
+            <div class="theater-block" data-depth="-0.2" style="z-index: 5;">
+                <h2>Endless Vector <br><span class="gradient-clip">Pipeline</span></h2>
+                <p>Cruising along vectorized flight trajectories inside an unrolled mesh perspective model.</p>
+            </div>
+        </section>
+
+        <section class="scroll-gate" id="gate-8" data-zone="MORPH // 08">
+            <div class="geometry-stage" id="geometryStage"></div>
+            <div class="theater-block" data-depth="-0.15">
+                <h2>Topology Mutation</h2>
+                <p>Vector structural modules computing variable scale and boundary parameters synchronized to scroll velocity.</p>
+            </div>
+        </section>
+
+        <section class="scroll-gate" id="gate-9" data-zone="TIMELINE // 09" style="align-items: flex-start; padding-top: 15vh;">
+            <div class="timeline-track" id="timelineTrack">
+                <div class="timeline-node">
+                    <div class="node-metric">01</div>
+                    <div class="node-body">
+                        <h4>Core Grid Synthesis</h4>
+                        <p>Initialization of baseline structural coordinate systems inside deep WebGL pipeline channels.</p>
+                    </div>
+                </div>
+                <div class="timeline-node">
+                    <div class="node-metric">02</div>
+                    <div class="node-body">
+                        <h4>Inertial Damper Tuning</h4>
+                        <p>Mathematical calibration of fluid velocity damping matrices to secure zero frame drop output.</p>
+                    </div>
+                </div>
+                <div class="timeline-node">
+                    <div class="node-metric">03</div>
+                    <div class="node-body">
+                        <h4>Quantum Node Fusion</h4>
+                        <p>Linking variable coordinate nodes directly across localized component layers to generate macro depth fields.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="scroll-gate" id="gate-10" data-zone="ENERGY // 10">
+            <div class="liquid-container" id="liquidContainer">
+                <div class="liquid-blob" style="background: var(--accent-primary); top: 10%; left: 20%;"></div>
+                <div class="liquid-blob" style="background: var(--accent-secondary); bottom: 15%; right: 15%;"></div>
+            </div>
+            <div class="theater-block" data-depth="-0.2">
+                <h2>Liquid Gradient <br><span class="gradient-clip">Flux Matrix</span></h2>
+                <p>Warping fluid color envelopes shifting organically as you advance deeper down the scroll coordinate stream.</p>
+            </div>
+        </section>
+
+        <section class="scroll-gate" id="gate-11" data-zone="GALLERY // 11">
+            <div class="gallery-matrix" id="galleryMatrix">
+                <div class="gallery-item" data-g-index="0">
+                    <div class="gallery-svg-placeholder">
+                        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="rgba(80,227,194,0.4)" stroke-width="1"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                    </div>
+                </div>
+                <div class="gallery-item" data-g-index="1">
+                    <div class="gallery-svg-placeholder">
+                        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="rgba(123,44,255,0.4)" stroke-width="1"><polygon points="12 2 2 7 12 12 22 7 12 2"/></svg>
+                    </div>
+                </div>
+                <div class="gallery-item" data-g-index="2">
+                    <div class="gallery-svg-placeholder">
+                        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/></svg>
+                    </div>
+                </div>
+            </div>
+            <div class="theater-block" data-depth="-0.05" style="margin-top: 45vh; pointer-events: none;">
+                <h2>Spatial Cluster Grid</h2>
+            </div>
+        </section>
+
+        <section class="scroll-gate" id="gate-12" data-zone="EPILOGUE // 12">
+            <div class="epilogue-sphere" id="epilogueSphere"></div>
+            <div class="story-epilogue-text" id="epilogueText">Every Scroll Has a Story.</div>
         </section>
 
     </div>
 
     <script>
         document.addEventListener("DOMContentLoaded", () => {
-            // Document Element Caches
-            const progressBar = document.getElementById("progressBar");
-            const parallaxLayers = document.querySelectorAll(".parallax-layer");
-            const structuralNodes = document.querySelectorAll(".structural-node");
-
-            // Kinetic Physics Variables
+            // UI Component Elements Cache
+            const progressVal = document.getElementById("progressVal");
+            const hudSectionLabel = document.getElementById("hudSectionLabel");
+            const hudFrame = document.getElementById("hudFrame");
+            const revealCurtain = document.getElementById("revealCurtain");
+            
+            // Kinetic Mechanics Parameters
             let targetScrollY = 0;
             let currentScrollY = 0;
-            const lerpFactor = 0.08; // Defines global scroll weight/fluidity (Lower is smoother, higher is punchier)
+            let lastScrollY = 0;
+            let scrollVelocity = 0;
+            const lerpCoeff = 0.075;
+            
+            // Mouse Tracker Tracking Cache
+            let mouseX = 0, mouseY = 0;
+            let targetMouseX = 0, targetMouseY = 0;
 
-            // Capture native window scroll milestones
             window.addEventListener("scroll", () => {
                 targetScrollY = window.scrollY;
             }, { passive: true });
 
-            // Core Frame Animation Iteration Routine Loop (Runs at maximum monitor Hz rate)
-            function executionParallaxEngineLoop() {
-                // Apply Linear Interpolation (Lerp) to smooth out raw scroll steps
-                currentScrollY += (targetScrollY - currentScrollY) * lerpFactor;
+            window.addEventListener("mousemove", (e) => {
+                targetMouseX = (e.clientX / window.innerWidth) - 0.5;
+                targetMouseY = (e.clientY / window.innerHeight) - 0.5;
+            }, { passive: true });
 
-                // 1. Calculate and update global progress indicator metrics
-                const totalScrollableHeight = document.documentElement.scrollHeight - window.innerHeight;
-                if (totalScrollableHeight > 0) {
-                    const scrollPercentage = (currentScrollY / totalScrollableHeight) * 100;
-                    progressBar.style.width = `${scrollPercentage}%`;
-                }
+            // Initialize Section 4 Matrix Parameters (Galaxy Particles)
+            const canvas = document.getElementById("galaxyCanvas");
+            const ctx = canvas.getContext("2d");
+            let particles = [];
+            const particleCount = 600;
 
-                // 2. Compute background environmental layout translation layers
-                parallaxLayers.forEach(layer => {
-                    const movementSpeed = parseFloat(layer.getAttribute("data-speed")) || 0;
-                    const calculatedYTranslation = currentScrollY * movementSpeed;
-                    
-                    // Hardware-accelerated translate3d avoids layout re-flows entirely
-                    layer.style.transform = `translate3d(0, ${calculatedYTranslation}px, 0)`;
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            resizeCanvas();
+            window.addEventListener("resize", resizeCanvas);
+
+            // Populate Particle Matrix Structure
+            const colors = ['#50e3c2', '#7b2cff', '#ffffff'];
+            for(let i=0; i<particleCount; i++) {
+                particles.push({
+                    x: (Math.random() - 0.5) * 2000,
+                    y: (Math.random() - 0.5) * 2000,
+                    z: Math.random() * 2000,
+                    size: Math.random() * 2 + 0.5,
+                    color: colors[Math.floor(Math.random() * colors.length)]
                 });
-
-                // 3. Compute foreground typography / element layout nodes transitions
-                structuralNodes.forEach(node => {
-                    const translationFactor = parseFloat(node.getAttribute("data-speed")) || 0;
-                    const calculatedNodeYTranslation = currentScrollY * translationFactor;
-                    
-                    // Simultaneously interpolate opacity as the element drifts across view dimensions
-                    const parentSection = node.closest('.parallax-section');
-                    const sectionTopOffset = parentSection.offsetTop;
-                    const relativeDistance = currentScrollY - sectionTopOffset;
-                    
-                    let adaptiveOpacity = 1 - Math.abs(relativeDistance / window.innerHeight);
-                    adaptiveOpacity = Math.max(0, Math.min(1, adaptiveOpacity)); // Clamp between 0 and 1
-
-                    node.style.transform = `translate3d(0, ${calculatedNodeYTranslation}px, 0)`;
-                    node.style.opacity = adaptiveOpacity;
-                });
-
-                // Request next frame execution loop continuously
-                requestAnimationFrame(executionParallaxEngineLoop);
             }
 
-            // Fire up engine tracking pipelines
-            requestAnimationFrame(executionParallaxEngineLoop);
+            // Initialize Section 8 Morphing Arrays
+            const geomStage = document.getElementById("geometryStage");
+            const shapeCount = 12;
+            const shapesArray = [];
+            for(let i=0; i<shapeCount; i++) {
+                const el = document.createElement("div");
+                el.classList.add("morph-shape");
+                el.style.width = `${Math.random() * 80 + 40}px`;
+                el.style.height = el.style.width;
+                el.style.left = `${Math.random() * 80 + 10}%`;
+                el.style.top = `${Math.random() * 80 + 10}%`;
+                geomStage.appendChild(el);
+                shapesArray.push({
+                    element: el,
+                    speedX: (Math.random() - 0.5) * 2,
+                    speedY: (Math.random() - 0.5) * 2,
+                    rotSpeed: (Math.random() - 0.5) * 1,
+                    seed: Math.random() * 100
+                });
+            }
 
-            // Handle clean asset scaling transformations on viewport modifications
-            window.addEventListener("resize", () => {
-                targetScrollY = window.scrollY;
+            // Setup Structural Section Intersections Observers
+            const sections = document.querySelectorAll(".scroll-gate");
+            const observerOptions = { threshold: 0.15 };
+            const sectionStatusMap = new Map();
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    sectionStatusMap.set(entry.target.id, entry.isIntersecting);
+                    if(entry.isIntersecting) {
+                        const zoneLabel = entry.target.getAttribute("data-zone");
+                        if(zoneLabel) hudSectionLabel.innerText = zoneLabel;
+                    }
+                });
+            }, observerOptions);
+
+            sections.forEach(sec => {
+                observer.observe(sec);
+                sectionStatusMap.set(sec.id, false);
             });
+
+            // Master Execution Frame Iteration Loop Pipeline
+            function processOdysseyEngineLoop() {
+                // Easing calculation updates
+                currentScrollY += (targetScrollY - currentScrollY) * lerpCoeff;
+                scrollVelocity = Math.abs(currentScrollY - lastScrollY);
+                lastScrollY = currentScrollY;
+
+                mouseX += (targetMouseX - mouseX) * 0.1;
+                mouseY += (targetMouseY - mouseY) * 0.1;
+
+                const maxScrollLimit = document.documentElement.scrollHeight - window.innerHeight;
+                const progressFactor = maxScrollLimit > 0 ? (currentScrollY / maxScrollLimit) : 0;
+                
+                document.documentElement.style.setProperty('--scroll-progress', `${progressFactor * 100}%`);
+                progressVal.innerText = `${(progressFactor * 100).toFixed(1)}%`;
+
+                // Multi-Layer Common Execution Tracking
+                sections.forEach(sec => {
+                    if (!sectionStatusMap.get(sec.id)) return;
+
+                    const targetBlock = sec.querySelector(".theater-block");
+                    const spatialLayers = sec.querySelectorAll(".spatial-layer");
+                    const relativeOffset = currentScrollY - sec.offsetTop;
+                    const normalizedOffset = relativeOffset / window.innerHeight;
+
+                    // Compute focus lens values
+                    if (targetBlock) {
+                        const blockDepth = parseFloat(targetBlock.getAttribute("data-depth")) || -0.1;
+                        const blockY = relativeOffset * blockDepth;
+                        let opacityCurve = 1 - Math.abs(relativeOffset / (window.innerHeight * 0.75));
+                        opacityCurve = Math.max(0, Math.min(1, opacityCurve));
+
+                        targetBlock.style.transform = `translate3d(0, ${blockY}px, 0)`;
+                        targetBlock.style.opacity = opacityCurve;
+                        targetBlock.style.filter = `blur(${(1 - opacityCurve) * 12}px)`;
+                    }
+
+                    // Compute standard micro parallax depth frames
+                    spatialLayers.forEach(layer => {
+                        const depthFactor = parseFloat(layer.getAttribute("data-depth")) || 0;
+                        const layerY = relativeOffset * depthFactor;
+                        layer.style.transform = `translate3d(${-mouseX * depthFactor * 100}px, ${layerY}px, 0)`;
+                    });
+
+                    // SECTION DRIVEN ANIMATION CONTROLLERS
+                    switch (sec.id) {
+                        case "gate-2":
+                            let curtainProgress = (relativeOffset + window.innerHeight / 2) / window.innerHeight;
+                            curtainProgress = Math.max(0, Math.min(1, curtainProgress));
+                            revealCurtain.style.setProperty('--reveal-delta', `${curtainProgress * 100}%`);
+                            break;
+
+                        case "gate-4":
+                            // Clear and update galaxy simulation canvas properties
+                            ctx.fillStyle = '#05060b';
+                            ctx.fillRect(0, 0, canvas.width, canvas.height);
+                            
+                            const scrollZOffset = relativeOffset * 2.5;
+                            ctx.save();
+                            ctx.translate(canvas.width / 2 + (mouseX * 50), canvas.height / 2 + (mouseY * 50));
+                            
+                            particles.forEach(p => {
+                                let calculatedZ = p.z - scrollZOffset;
+                                // Loop positions
+                                while(calculatedZ <= 0) calculatedZ += 2000;
+                                while(calculatedZ > 2000) calculatedZ -= 2000;
+
+                                const perspectiveScale = 400 / calculatedZ;
+                                const screenX = p.x * perspectiveScale;
+                                const screenY = p.y * perspectiveScale;
+                                const particleRadius = p.size * perspectiveScale * 1.5;
+
+                                if(screenX > -canvas.width && screenX < canvas.width && screenY > -canvas.height && screenY < canvas.height) {
+                                    ctx.beginPath();
+                                    ctx.arc(screenX, screenY, Math.max(0.2, particleRadius), 0, Math.PI * 2);
+                                    ctx.fillStyle = p.color;
+                                    ctx.globalAlpha = Math.min(1, (2000 - calculatedZ) / 500);
+                                    ctx.fill();
+                                }
+                            });
+                            ctx.restore();
+                            break;
+
+                        case "gate-5":
+                            const cards = sec.querySelectorAll(".glass-card");
+                            cards.forEach((card, idx) => {
+                                const speed = parseFloat(card.getAttribute("data-card-speed")) || 0.1;
+                                const cardY = relativeOffset * speed;
+                                const cardRotX = normalizedOffset * 25 + (mouseY * 15);
+                                const cardRotY = (mouseX * 15) + (idx * 5);
+                                card.style.transform = `translate3d(0, ${cardY}px, ${idx * 30}px) rotateX(${cardRotX}deg) rotateY(${cardRotY}deg)`;
+                            });
+                            break;
+
+                        case "gate-6":
+                            const typoRows = sec.querySelectorAll(".typo-row");
+                            typoRows.forEach(row => {
+                                const inlineSpeed = parseFloat(row.getAttribute("data-scroll-mx")) || 1;
+                                const rowX = relativeOffset * inlineSpeed;
+                                row.style.transform = `translate3d(${rowX}px, 0, 0)`;
+                            });
+                            break;
+
+                        case "gate-7":
+                            const floor = document.getElementById("tunnelFloor");
+                            const ceil = document.getElementById("tunnelCeil");
+                            const forwardMotionZ = (currentScrollY * 0.8) % 100;
+                            floor.style.transform = `rotateX(85deg) translate3d(0, ${forwardMotionZ}px, 0)`;
+                            ceil.style.transform = `rotateX(-85deg) translate3d(0, ${forwardMotionZ}px, 0)`;
+                            break;
+
+                        case "gate-8":
+                            shapesArray.forEach((shape, i) => {
+                                const dynamicOffset = relativeOffset * 0.05 * (i % 2 === 0 ? 1 : -1);
+                                const scaleOscillation = 1 + Math.sin(currentScrollY * 0.002 + shape.seed) * 0.15;
+                                const calculatedRadius = Math.abs(Math.sin(currentScrollY * 0.001 + shape.seed)) * 50;
+                                shape.element.style.transform = `translate3d(${mouseX * 30}px, ${dynamicOffset}px, 0) rotate(${currentScrollY * 0.03 * shape.rotSpeed}deg) scale3d(${scaleOscillation}, ${scaleOscillation}, 1)`;
+                                shape.element.style.borderRadius = `${calculatedRadius}%`;
+                            });
+                            break;
+
+                        case "gate-9":
+                            const nodes = sec.querySelectorAll(".timeline-node");
+                            nodes.forEach(node => {
+                                const activationBound = node.offsetTop + sec.offsetTop - window.innerHeight * 0.65;
+                                if (currentScrollY > activationBound) {
+                                    node.classList.add("active");
+                                } else {
+                                    node.classList.remove("active");
+                                }
+                            });
+                            break;
+
+                        case "gate-10":
+                            const container = document.getElementById("liquidContainer");
+                            const blobs = container.querySelectorAll(".liquid-blob");
+                            const movementValue = relativeOffset * 0.15;
+                            blobs[0].style.transform = `translate3d(${movementValue}px, ${Math.sin(currentScrollY * 0.002) * 40}px, 0)`;
+                            blobs[1].style.transform = `translate3d(${-movementValue}px, ${Math.cos(currentScrollY * 0.002) * 40}px, 0)`;
+                            break;
+
+                        case "gate-11":
+                            const galleryItems = sec.querySelectorAll(".gallery-item");
+                            galleryItems.forEach((item, idx) => {
+                                const baseDistance = (idx - 1) * 320;
+                                const scrollSpread = relativeOffset * 0.4;
+                                const calculatedX = baseDistance + (idx === 0 ? -scrollSpread : idx === 2 ? scrollSpread : 0);
+                                const rotY = normalizedOffset * 35 + (mouseX * 10);
+                                item.style.transform = `translate3d(${calculatedX}px, 0, ${Math.abs(normalizedOffset) * -150}px) rotateY(${rotY}deg) scale(${1 - Math.abs(normalizedOffset) * 0.15})`;
+                                item.style.opacity = 1 - Math.abs(normalizedOffset) * 0.8;
+                            });
+                            break;
+
+                        case "gate-12":
+                            const sphere = document.getElementById("epilogueSphere");
+                            const txt = document.getElementById("epilogueText");
+                            
+                            // Trigger explosion transition state profile
+                            if (relativeOffset > window.innerHeight * 0.25) {
+                                const explosionFactor = (relativeOffset - window.innerHeight * 0.25) / (window.innerHeight * 0.5);
+                                const clampedExplosion = Math.max(0, Math.min(1, explosionFactor));
+                                
+                                sphere.style.transform = `scale3d(${1 + clampedExplosion * 8}, ${1 + clampedExplosion * 8}, 1)`;
+                                sphere.style.opacity = 1 - clampedExplosion;
+                                sphere.style.filter = `blur(${clampedExplosion * 20}px)`;
+                                
+                                txt.style.opacity = clampedExplosion;
+                                txt.style.transform = `scale3d(${1 - (1 - clampedExplosion) * 0.1}, ${1 - (1 - clampedExplosion) * 0.1}, 1)`;
+                                txt.style.filter = `blur(${(1 - clampedExplosion) * 10}px)`;
+                                
+                                if (clampedExplosion >= 0.9) {
+                                    hudFrame.style.opacity = "0";
+                                } else {
+                                    hudFrame.style.opacity = "1";
+                                }
+                            } else {
+                                sphere.style.transform = `scale3d(1, 1, 1)`;
+                                sphere.style.opacity = 1;
+                                sphere.style.filter = `blur(0px)`;
+                                txt.style.opacity = 0;
+                                hudFrame.style.opacity = "1";
+                            }
+                            break;
+                    }
+                });
+
+                requestAnimationFrame(processOdysseyEngineLoop);
+            }
+
+            requestAnimationFrame(processOdysseyEngineLoop);
         });
     </script>
 </body>
